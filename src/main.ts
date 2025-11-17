@@ -1,39 +1,316 @@
 import './style.css'
 import typescriptLogo from './typescript.svg'
-import viteLogo from '/vite.svg'
-import { setupCounter } from './counter.ts'
-import { sum } from '@/lib/utils.ts'
+import { loadCodeExample, executeCode, formatCodeForDisplay } from '@/lib/sandbox.ts'
 
-document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
-  <div>
-    <a href="https://vite.dev" target="_blank">
-      <img src="${viteLogo}" class="logo" alt="Vite logo" />
-    </a>
-    <a href="https://www.typescriptlang.org/" target="_blank">
-      <img src="${typescriptLogo}" class="logo vanilla" alt="TypeScript logo" />
-    </a>
-    <h1>Vite + TypeScript</h1>
-    <div class="card">
-      <button id="counter" type="button"></button>
+
+// Concepts TypeScript avec descriptions et fichiers associés
+const concepts = [
+  {
+    id: 'inference',
+    title: 'Inférence de Type',
+    description: 'TypeScript peut automatiquement inférer le type d\'une variable à partir de sa valeur initiale.',
+    icon: '🔍',
+    filename: 'inference.ts',
+  },
+  {
+    id: 'generic',
+    title: 'Fonctions Génériques',
+    description: 'Les fonctions génériques permettent de créer des fonctions réutilisables qui fonctionnent avec différents types.',
+    icon: '⚙️',
+    filename: 'generic.ts',
+  },
+  {
+    id: 'void-never',
+    title: 'Void et Never',
+    description: 'void indique qu\'une fonction ne retourne rien, never indique qu\'elle ne retournera jamais.',
+    icon: '🚫',
+    filename: 'void-never.ts',
+  },
+  {
+    id: 'enum',
+    title: 'Enums',
+    description: 'Les enums permettent de définir un ensemble de constantes nommées pour un groupe de valeurs fixes.',
+    icon: '📋',
+    filename: 'enum.ts',
+  },
+  {
+    id: 'objects',
+    title: 'Types d\'Objets',
+    description: 'Différentes façons de typer des objets : interfaces, types, propriétés optionnelles, readonly.',
+    icon: '📦',
+    filename: 'object-types.ts',
+  },
+  {
+    id: 'dictionary',
+    title: 'Dictionnaires',
+    description: 'Comment typer des dictionnaires avec Record<K, V> et les index signatures.',
+    icon: '📚',
+    filename: 'dictionary.ts',
+  },
+  {
+    id: 'functions',
+    title: 'Fonctions',
+    description: 'Tout sur les fonctions : paramètres, types de retour, génériques, callbacks, async/await.',
+    icon: '⚡',
+    filename: 'functions.ts',
+  },
+  {
+    id: 'utility-types',
+    title: 'Types Utilitaires',
+    description: 'Partial, Record, Required et autres types utilitaires pour transformer des types.',
+    icon: '🛠️',
+    filename: 'utility-types.ts',
+  },
+  {
+    id: 'readonly',
+    title: 'Readonly',
+    description: 'Le mot-clé readonly pour rendre des propriétés, tableaux ou objets immuables.',
+    icon: '🔒',
+    filename: 'readonly.ts',
+  },
+  {
+    id: 'pick-omit',
+    title: 'Pick et Omit',
+    description: 'Pick sélectionne des propriétés, Omit les exclut. Utiles pour créer de nouveaux types.',
+    icon: '✂️',
+    filename: 'pick-omit.ts',
+  },
+]
+
+// Créer l'interface
+function createApp(): void {
+  const app = document.querySelector<HTMLDivElement>('#app')!
+  
+  app.innerHTML = `
+    <div class="app-container">
+      <header class="header">
+        <div class="header-content">
+          <div class="logo-container">
+            <img src="${typescriptLogo}" class="logo" alt="TypeScript logo" />
+            <h1>Guide TypeScript</h1>
+          </div>
+          <p class="subtitle">Apprenez TypeScript avec des exemples pratiques</p>
+        </div>
+      </header>
+
+      <div class="main-content">
+        <aside class="sidebar">
+          <h2>Concepts</h2>
+          <nav class="concept-nav">
+            ${concepts.map(concept => `
+              <button class="concept-btn" data-concept="${concept.id}">
+                <span class="concept-icon">${concept.icon}</span>
+                <span class="concept-title">${concept.title}</span>
+              </button>
+            `).join('')}
+          </nav>
+        </aside>
+
+        <main class="content-area">
+          <div class="concept-display">
+            <div class="welcome-message">
+              <h2>👋 Bienvenue dans le Guide TypeScript</h2>
+              <p>Sélectionnez un concept dans le menu de gauche pour voir les exemples de code et exécuter les sandbox.</p>
+              <div class="stats">
+                <div class="stat">
+                  <span class="stat-number">${concepts.length}</span>
+                  <span class="stat-label">Concepts</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
     </div>
-    <p class="read-the-docs">
-      Click on the Vite and TypeScript logos to learn more
-    </p>
-  </div>
-`
+  `
 
-setupCounter(document.querySelector<HTMLButtonElement>('#counter')!)
+  // Gérer les boutons de concepts
+  const conceptButtons = document.querySelectorAll<HTMLButtonElement>('.concept-btn')
+  conceptButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const conceptId = btn.dataset.concept
+      if (conceptId) {
+        showConcept(conceptId)
+        
+        // Mettre à jour l'état actif
+        conceptButtons.forEach(b => b.classList.remove('active'))
+        btn.classList.add('active')
+      }
+    })
+  })
 
-const btn: HTMLButtonElement = document.createElement('button')
-const app: HTMLDivElement | null = document.querySelector<HTMLDivElement>('#app')
+  // Afficher le premier concept par défaut
+  if (conceptButtons.length > 0) {
+    const firstButton = conceptButtons[0]
+    if (firstButton) {
+      firstButton.click()
+    }
+  }
+}
 
-app?.appendChild(btn)
+async function showConcept(conceptId: string): Promise<void> {
+  const concept = concepts.find(c => c.id === conceptId)
+  if (!concept) return
 
-btn.textContent = 'Click me'
-btn.addEventListener('click', () => {
-  const p = document.createElement('p')
-  p.textContent = `2 + 3 = ${sum(2, 3)}`
-  document.body.appendChild(p)
-})
+  const conceptDisplay = document.querySelector('.concept-display')!
+  
+  // Afficher un loader pendant le chargement
+  conceptDisplay.innerHTML = `
+    <div class="concept-content">
+      <div class="concept-header">
+        <span class="concept-icon-large">${concept.icon}</span>
+        <h2>${concept.title}</h2>
+      </div>
+      <p class="concept-description">${concept.description}</p>
+      <div class="loading">Chargement du code...</div>
+    </div>
+  `
 
-app?.appendChild(btn)
+  try {
+    // Charger le code source
+    const code = await loadCodeExample(concept.filename)
+    
+    // Afficher le sandbox
+    conceptDisplay.innerHTML = `
+      <div class="concept-content">
+        <div class="concept-header">
+          <span class="concept-icon-large">${concept.icon}</span>
+          <h2>${concept.title}</h2>
+        </div>
+        <p class="concept-description">${concept.description}</p>
+        
+        <div class="sandbox-container">
+          <div class="sandbox-header">
+            <h3>📝 Code Source</h3>
+            <button class="run-btn" data-concept="${conceptId}">
+              ▶️ Exécuter le code
+            </button>
+          </div>
+          <div class="code-editor">
+            <pre class="code-block"><code>${formatCodeForDisplay(code)}</code></pre>
+          </div>
+          
+          <div class="sandbox-results" id="sandbox-results-${conceptId}">
+            <div class="results-header">
+              <h3>📊 Résultats</h3>
+              <button class="clear-results-btn" data-concept="${conceptId}">Effacer</button>
+            </div>
+            <div class="results-content" id="results-content-${conceptId}">
+              <p class="results-placeholder">Cliquez sur "Exécuter le code" pour voir les résultats</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    `
+
+    // Ajouter les event listeners pour les boutons
+    const runBtn = conceptDisplay.querySelector(`.run-btn[data-concept="${conceptId}"]`)
+    const clearBtn = conceptDisplay.querySelector(`.clear-results-btn[data-concept="${conceptId}"]`)
+    const resultsContent = document.getElementById(`results-content-${conceptId}`)
+
+    if (runBtn && resultsContent) {
+      runBtn.addEventListener('click', () => {
+        executeSandboxCode(code, resultsContent)
+      })
+    }
+
+    if (clearBtn && resultsContent) {
+      clearBtn.addEventListener('click', () => {
+        resultsContent.innerHTML = '<p class="results-placeholder">Cliquez sur "Exécuter le code" pour voir les résultats</p>'
+      })
+    }
+  } catch (error) {
+    conceptDisplay.innerHTML = `
+      <div class="concept-content">
+        <div class="concept-header">
+          <span class="concept-icon-large">${concept.icon}</span>
+          <h2>${concept.title}</h2>
+        </div>
+        <p class="concept-description">${concept.description}</p>
+        <div class="error-message">
+          ❌ Erreur lors du chargement du code: ${error instanceof Error ? error.message : String(error)}
+        </div>
+      </div>
+    `
+  }
+}
+
+function executeSandboxCode(code: string, resultsContainer: HTMLElement): void {
+  // Afficher un loader
+  resultsContainer.innerHTML = '<div class="loading">Exécution en cours...</div>'
+
+  // Exécuter le code
+  const result = executeCode(code)
+
+  // Afficher les résultats
+  if (result.error) {
+    resultsContainer.innerHTML = `
+      <div class="error-result">
+        <strong>❌ Erreur:</strong>
+        <pre>${escapeHtml(result.error)}</pre>
+      </div>
+    `
+  } else if (result.logs.length === 0) {
+    resultsContainer.innerHTML = `
+      <div class="no-results">
+        <p>✅ Code exécuté avec succès, mais aucun log n'a été généré.</p>
+      </div>
+    `
+  } else {
+    const logsHtml = result.logs.map(log => {
+      const time = log.timestamp.toLocaleTimeString('fr-FR', { 
+        hour: '2-digit', 
+        minute: '2-digit', 
+        second: '2-digit',
+        fractionalSecondDigits: 3
+      })
+      const typeClass = `log-${log.type}`
+      const formattedMessage = formatLogMessage(log.message)
+      return `
+        <div class="log-entry ${typeClass}">
+          <span class="log-time">[${time}]</span>
+          <span class="log-type">${log.type.toUpperCase()}</span>
+          <span class="log-message">${formattedMessage}</span>
+        </div>
+      `
+    }).join('')
+
+    resultsContainer.innerHTML = `
+      <div class="logs-container">
+        ${logsHtml}
+      </div>
+    `
+
+    // Scroll vers le bas
+    resultsContainer.scrollTop = resultsContainer.scrollHeight
+  }
+}
+
+function formatLogMessage(message: string): string {
+  // Échapper le HTML
+  let formatted = escapeHtml(message)
+  
+  // Mettre en évidence les valeurs importantes
+  formatted = formatted
+    // Mettre en évidence les nombres
+    .replace(/(\d+)/g, '<span class="log-number">$1</span>')
+    // Mettre en évidence les strings
+    .replace(/"([^"]+)"/g, '<span class="log-string">"$1"</span>')
+    // Mettre en évidence les booléens
+    .replace(/\b(true|false)\b/g, '<span class="log-boolean">$1</span>')
+    // Mettre en évidence les null/undefined
+    .replace(/\b(null|undefined)\b/g, '<span class="log-null">$1</span>')
+    // Mettre en évidence les objets/tableaux
+    .replace(/(\{[^}]*\}|\[[^\]]*\])/g, '<span class="log-object">$1</span>')
+  
+  return formatted
+}
+
+function escapeHtml(text: string): string {
+  const div = document.createElement('div')
+  div.textContent = text
+  return div.innerHTML
+}
+
+// Initialiser l'application
+createApp()
