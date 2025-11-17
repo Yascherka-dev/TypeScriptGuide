@@ -61,20 +61,22 @@ Les fichiers de production seront générés dans le dossier `dist/`.
 ### GitHub Pages
 
 1. Ajoutez dans `vite.config.ts` :
+
 ```typescript
 export default defineConfig({
-  base: '/votre-repo-name/',
+  base: 'https://github.com/Yascherka-dev/TypeScriptGuide',
   // ...
 })
 ```
 
 2. Créez un workflow GitHub Actions (`.github/workflows/deploy.yml`) :
+
 ```yaml
 name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   build-and-deploy:
@@ -180,6 +182,9 @@ Les contributions sont les bienvenues ! N'hésitez pas à ouvrir une issue ou un
 Pour toute question, n'hésitez pas à ouvrir une issue sur GitHub.
 
 # TypeScriptGuide
+
 # TypeScriptGuide
+
 # TypeScriptGuide
+
 # TypeScriptGuide
